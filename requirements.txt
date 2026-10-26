@@ -1,0 +1,12 @@
+# Data Processing & Transformation
+pandas>=2.2.0
+
+# Database Connectivity (PostgreSQL)
+psycopg2-binary>=2.9.9
+SQLAlchemy>=2.0.25
+
+# Environment Configuration
+python-dotenv>=1.0.1
+
+# HTTP & API Requests
+requests>=2.31.0
