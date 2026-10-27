@@ -35,14 +35,19 @@ except ImportError:
 # -----------------------------------------------------------------------------
 # DAG Base Directory & Environment
 # -----------------------------------------------------------------------------
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-load_dotenv(os.path.join(BASE_DIR, ".env"))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+env_file = os.path.join(BASE_DIR, ".env")
+if not os.path.exists(env_file):
+    # Fallback to standard installation location on VPS if run via symlink
+    env_file = "/opt/kenya-food-market-analytics/.env"
+load_dotenv(env_file)
 
 logger = logging.getLogger("airflow.task")
 
 HDX_URL = os.getenv("DATA_SOURCE_URL")
 if not HDX_URL:
-    raise ValueError("DATA_SOURCE_URL environment variable is missing from .env configuration.")
+    raise ValueError(f"DATA_SOURCE_URL environment variable is missing from .env at {env_file}.")
+
 
 # -----------------------------------------------------------------------------
 # Default Arguments (Retries, Timeouts, Dependencies)
