@@ -27,7 +27,10 @@ import psycopg2
 from dotenv import load_dotenv
 
 from airflow import DAG
-from airflow.operators.python import PythonOperator
+try:
+    from airflow.providers.standard.operators.python import PythonOperator
+except ImportError:
+    from airflow.operators.python import PythonOperator
 
 # -----------------------------------------------------------------------------
 # DAG Base Directory & Environment
@@ -37,10 +40,9 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 logger = logging.getLogger("airflow.task")
 
-HDX_URL = (
-    "https://data.humdata.org/dataset/e0d3fba6-f9a2-45d7-b949-140c455197ff/"
-    "resource/517ee1bf-2437-4f8c-aa1b-cb9925b9d437/download/wfp_food_prices_ken.csv"
-)
+HDX_URL = os.getenv("DATA_SOURCE_URL")
+if not HDX_URL:
+    raise ValueError("DATA_SOURCE_URL environment variable is missing from .env configuration.")
 
 # -----------------------------------------------------------------------------
 # Default Arguments (Retries, Timeouts, Dependencies)
@@ -64,14 +66,14 @@ def check_source_health(**context):
     Task 1: Pings the HDX/KNBS data endpoint to verify server availability.
     Includes failure simulation support for rubric demonstration.
     """
-    logger.info("Executing Task 1: Checking HDX/KNBS endpoint health...")
+    logger.info(f"Executing Task 1: Checking data endpoint health: {HDX_URL}")
     
     # Check if a transient failure simulation is requested via DAG run conf
     dag_run_conf = context.get('dag_run').conf if context.get('dag_run') else {}
     simulate_failure = dag_run_conf.get('simulate_failure', False)
     task_instance = context.get('task_instance')
     
-    if simulate_failure and task_instance and task_instance.try_number == 1:
+    if simulate_failure and task_instance and getattr(task_instance, 'try_number', 1) == 1:
         logger.warning(">>> SIMULATING TRANSIENT NETWORK FAILURE (Attempt 1 of 3) <<<")
         raise ConnectionResetError("Simulated Connection Timeout: KNBS remote server failed to respond.")
     
@@ -166,7 +168,7 @@ with DAG(
     dag_id='kenya_food_prices_etl_pipeline',
     default_args=default_args,
     description='Automated monthly batch ETL pipeline for Kenya food prices & inflation analysis',
-    schedule_interval='0 6 15 * *',       # 06:00 AM on 15th of every month
+    schedule='0 6 15 * *',       # 06:00 AM on 15th of every month
     catchup=False,
     max_active_runs=1,
     tags=['kenya', 'food_prices', 'inflation', 'capstone', 'knbs'],
@@ -175,31 +177,26 @@ with DAG(
     task_check_source_health = PythonOperator(
         task_id='check_source_health',
         python_callable=check_source_health,
-        provide_context=True,
     )
 
     task_extract_raw_data = PythonOperator(
         task_id='extract_raw_data',
         python_callable=extract_raw_data,
-        provide_context=True,
     )
 
     task_transform_clean = PythonOperator(
         task_id='transform_clean_normalise',
         python_callable=transform_clean_data,
-        provide_context=True,
     )
 
     task_load_warehouse = PythonOperator(
         task_id='load_postgres_warehouse',
         python_callable=load_postgres_warehouse,
-        provide_context=True,
     )
 
     task_data_quality_audit = PythonOperator(
         task_id='validate_data_quality_and_audit',
         python_callable=validate_data_quality_and_audit,
-        provide_context=True,
     )
 
     # -------------------------------------------------------------------------

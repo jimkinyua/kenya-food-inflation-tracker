@@ -18,15 +18,18 @@ import logging
 import argparse
 import urllib.request
 import urllib.error
+from dotenv import load_dotenv
 
 # -----------------------------------------------------------------------------
 # Configuration & Defaults
 # -----------------------------------------------------------------------------
-DEFAULT_URL = (
-    "https://data.humdata.org/dataset/e0d3fba6-f9a2-45d7-b949-140c455197ff/"
-    "resource/517ee1bf-2437-4f8c-aa1b-cb9925b9d437/download/wfp_food_prices_ken.csv"
-)
-DEFAULT_OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "raw")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+DEFAULT_URL = os.getenv("DATA_SOURCE_URL")
+if not DEFAULT_URL:
+    raise ValueError("DATA_SOURCE_URL environment variable is missing from .env configuration.")
+DEFAULT_OUTPUT_DIR = os.path.join(BASE_DIR, "data", "raw")
 DEFAULT_FILENAME = "wfp_food_prices_kenya.csv"
 EXPECTED_COLUMNS = [
     "date", "admin1", "admin2", "market", "market_id",
