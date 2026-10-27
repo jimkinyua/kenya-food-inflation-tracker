@@ -33,6 +33,7 @@ DB_PORT = int(os.getenv("DB_PORT", 5432))
 DB_NAME = os.getenv("DB_NAME", "kenya_food_prices")
 DB_USER = os.getenv("DB_USER", "postgres")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DATA_SOURCE_URL = os.getenv("DATA_SOURCE_URL", "")
 
 RAW_DATA_PATH = os.path.join(BASE_DIR, "data", "raw", "wfp_food_prices_kenya.csv")
 CLEAN_DATA_PATH = os.path.join(BASE_DIR, "data", "processed", "clean_food_prices_kenya.csv")
@@ -297,6 +298,26 @@ def main():
         run_analytical_queries(conn)
 
         duration = round(time.time() - start_time, 2)
+
+        # Step 5: Log Pipeline Execution to Governance Audit Log
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO governance.pipeline_audit_log (
+                    pipeline_name, run_id, source_name, source_url, raw_records_read,
+                    clean_records_loaded, execution_status, duration_seconds
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+            """, (
+                "load_to_postgres_standalone",
+                f"run_{int(time.time())}",
+                "Kenya Food Market Prices (KNBS/MoA)",
+                DATA_SOURCE_URL,
+                len(df_clean),
+                len(df_clean),
+                "PASSED",
+                duration
+            ))
+        conn.commit()
+
         logger.info(f"Warehouse Build & Load Completed Successfully in {duration}s!")
         sys.exit(0)
     except Exception as e:

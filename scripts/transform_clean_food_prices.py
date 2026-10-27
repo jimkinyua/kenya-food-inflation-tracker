@@ -56,7 +56,7 @@ UNIT_CONVERSION_FACTORS = {
     "Bunch": 1.0,
 }
 
-# Official 47 Kenyan County Codes
+# Official 47 Kenyan County Codes (including historical sub-districts)
 COUNTY_CODE_MAP = {
     "Mombasa": 1, "Kwale": 2, "Kilifi": 3, "Tana River": 4, "Lamu": 5,
     "Taita Taveta": 6, "Garissa": 7, "Wajir": 8, "Mandera": 9, "Marsabit": 10,
@@ -67,7 +67,20 @@ COUNTY_CODE_MAP = {
     "Baringo": 30, "Laikipia": 31, "Nakuru": 32, "Narok": 33, "Kajiado": 34,
     "Kericho": 35, "Bomet": 36, "Kakamega": 37, "Vihiga": 38, "Bungoma": 39,
     "Busia": 40, "Siaya": 41, "Kisumu": 42, "Homa Bay": 43, "Migori": 44,
-    "Kisii": 45, "Nyamira": 46, "Nairobi": 47
+    "Kisii": 45, "Nyamira": 46, "Nairobi": 47,
+    # Historical Sub-District mappings to official 47 Counties
+    "Moyale": 10,       # Part of Marsabit County (10)
+    "Ijara": 7,         # Part of Garissa County (7)
+    "Meru North": 12,   # Part of Meru County (12)
+    "Meru South": 13    # Part of Tharaka Nithi County (13)
+}
+
+# Sub-district name to official county name mapping
+DISTRICT_TO_COUNTY_NAME = {
+    "Moyale": "Marsabit",
+    "Ijara": "Garissa",
+    "Meru North": "Meru",
+    "Meru South": "Tharaka Nithi"
 }
 
 
@@ -99,9 +112,10 @@ def clean_and_normalise_food_prices(raw_csv_path: str, output_csv_path: str) -> 
 
     hola_after = df[df['market'].str.contains("Hola", na=False)][['market', 'admin1', 'admin2', 'latitude', 'longitude']].iloc[0].to_dict()
 
-    # Standardize county name
+    # Standardize county name & map historical sub-districts to official 47 counties
     df['admin2'] = df['admin2'].str.strip()
-    # Map to official County Code
+    df['admin2'] = df['admin2'].replace(DISTRICT_TO_COUNTY_NAME)
+    # Map to official County Code (001 - 047)
     df['county_code'] = df['admin2'].map(COUNTY_CODE_MAP).fillna(0).astype(int)
 
     # -------------------------------------------------------------------------

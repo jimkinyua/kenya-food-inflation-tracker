@@ -113,52 +113,16 @@ def load_postgres_warehouse(**context):
 
 def validate_data_quality_and_audit(**context):
     """
-    Task 5: Asserts data quality rules and logs execution audit lineage.
+    Task 5: Asserts data quality rules and logs execution audit lineage via governance suite.
     """
     logger.info("Executing Task 5: Running Data Quality checks & Governance Logging...")
-    conn = psycopg2.connect(
-        host=os.getenv("DB_HOST", "localhost"),
-        port=int(os.getenv("DB_PORT", 5432)),
-        dbname=os.getenv("DB_NAME", "kenya_food_prices"),
-        user=os.getenv("DB_USER", "postgres"),
-        password=os.getenv("DB_PASSWORD", "")
-    )
-    dag_run_id = context.get('run_id', f"manual_run_{int(time.time())}")
+    python_bin = sys.executable
+    script_path = os.path.join(BASE_DIR, "scripts", "run_data_quality_checks.py")
+    res = subprocess.run([python_bin, script_path], capture_output=True, text=True, check=True)
+    logger.info(res.stdout)
+    if "100% PASSED Assertions" not in res.stdout:
+        raise ValueError("Data quality audit did not achieve 100% passed assertions!")
 
-    with conn.cursor() as cur:
-        # Check 1: Verify Staging vs Fact row counts
-        cur.execute("SELECT COUNT(*) FROM staging.raw_wfp_food_prices;")
-        staging_count = cur.fetchone()[0]
-
-        cur.execute("SELECT COUNT(*) FROM analytics.fact_food_prices;")
-        fact_count = cur.fetchone()[0]
-
-        # Check 2: Verify zero negative or null prices
-        cur.execute("SELECT COUNT(*) FROM analytics.fact_food_prices WHERE normalized_price_per_kg <= 0 OR normalized_price_per_kg IS NULL;")
-        invalid_prices = cur.fetchone()[0]
-
-        # Log Data Quality Assertion
-        status = "PASSED" if (staging_count == fact_count and invalid_prices == 0) else "FAILED"
-        cur.execute("""
-            INSERT INTO governance.data_quality_log (run_id, check_name, table_name, assertion_rule, status, failed_rows_count)
-            VALUES (%s, %s, %s, %s, %s, %s);
-        """, (dag_run_id, "reconciliation_and_positive_prices", "fact_food_prices", "staging_count == fact_count AND price > 0", status, invalid_prices))
-
-        # Log Pipeline Execution Audit Lineage
-        cur.execute("""
-            INSERT INTO governance.pipeline_audit_log (
-                pipeline_name, run_id, source_name, source_url, raw_records_read,
-                clean_records_loaded, execution_status, duration_seconds
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
-        """, ("kenya_food_prices_etl_pipeline", dag_run_id, "KNBS/WFP HDX", HDX_URL, staging_count, fact_count, status, 15.0))
-
-        conn.commit()
-    conn.close()
-
-    if status != "PASSED":
-        raise ValueError(f"Data quality assertion failed! Invalid prices count: {invalid_prices}")
-
-    logger.info(f"Data Quality Asserts PASSED: Staging ({staging_count:,}) == Fact ({fact_count:,}) | 0 Invalid Prices.")
 
 
 # -----------------------------------------------------------------------------
