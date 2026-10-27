@@ -1,0 +1,342 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Executive KPI Scorecard (Data Health & Market Metrics)",
+      "type": "row"
+    },
+    {
+      "id": 1,
+      "title": "Total Observations Ingested",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "datasource": { "type": "postgres", "uid": "PostgreSQL-Food-Prices" },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) AS total_rows FROM analytics.fact_food_prices;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          },
+          "unit": "locale"
+        }
+      },
+      "options": {
+        "reduceOptions": { "values": false, "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Counties Monitored",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "datasource": { "type": "postgres", "uid": "PostgreSQL-Food-Prices" },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(DISTINCT county_name) AS total_counties FROM analytics.dim_location;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null }
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "reduceOptions": { "values": false, "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Commodities Tracked",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "datasource": { "type": "postgres", "uid": "PostgreSQL-Food-Prices" },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) AS total_commodities FROM analytics.dim_commodity;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "purple", "value": null }
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "reduceOptions": { "values": false, "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Avg White Maize Price (KES/KG)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "datasource": { "type": "postgres", "uid": "PostgreSQL-Food-Prices" },
+      "targets": [
+        {
+          "rawSql": "SELECT ROUND(AVG(f.normalized_price_per_kg)::numeric, 2) AS current_price FROM analytics.fact_food_prices f JOIN analytics.dim_commodity c ON f.commodity_id = c.commodity_id WHERE c.commodity_name = 'Maize (white)' AND f.date_id >= 20230101;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 60 },
+              { "color": "red", "value": 85 }
+            ]
+          },
+          "unit": "currencyKES"
+        }
+      },
+      "options": {
+        "reduceOptions": { "values": false, "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "area"
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 101,
+      "title": "Spatial & Cross-County Analysis",
+      "type": "row"
+    },
+    {
+      "id": 5,
+      "title": "Kenya County Market Price Distribution (White Maize)",
+      "type": "geomap",
+      "gridPos": { "h": 10, "w": 14, "x": 0, "y": 6 },
+      "datasource": { "type": "postgres", "uid": "PostgreSQL-Food-Prices" },
+      "targets": [
+        {
+          "rawSql": "SELECT loc.market_name, loc.county_name, loc.latitude, loc.longitude, ROUND(AVG(f.normalized_price_per_kg)::numeric, 2) AS avg_price_per_kg FROM analytics.fact_food_prices f JOIN analytics.dim_location loc ON f.location_id = loc.location_id JOIN analytics.dim_commodity c ON f.commodity_id = c.commodity_id WHERE c.commodity_name = 'Maize (white)' GROUP BY loc.market_name, loc.county_name, loc.latitude, loc.longitude;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false }
+          }
+        }
+      },
+      "options": {
+        "view": {
+          "id": "coords",
+          "lat": 0.5,
+          "lon": 37.8,
+          "zoom": 6
+        },
+        "layers": [
+          {
+            "type": "markers",
+            "name": "Market Hubs",
+            "config": {
+              "showLegend": true
+            },
+            "location": {
+              "mode": "coords",
+              "latitude": "latitude",
+              "longitude": "longitude"
+            },
+            "style": {
+              "color": {
+                "field": "avg_price_per_kg",
+                "fixed": "dark-green"
+              },
+              "size": {
+                "field": "avg_price_per_kg",
+                "min": 5,
+                "max": 18
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "Top 10 Counties with Highest White Maize Prices (KES/KG)",
+      "type": "bargauge",
+      "gridPos": { "h": 10, "w": 10, "x": 14, "y": 6 },
+      "datasource": { "type": "postgres", "uid": "PostgreSQL-Food-Prices" },
+      "targets": [
+        {
+          "rawSql": "SELECT loc.county_name AS metric, ROUND(AVG(f.normalized_price_per_kg)::numeric, 2) AS value FROM analytics.fact_food_prices f JOIN analytics.dim_location loc ON f.location_id = loc.location_id JOIN analytics.dim_commodity c ON f.commodity_id = c.commodity_id WHERE c.commodity_name = 'Maize (white)' GROUP BY loc.county_name ORDER BY value DESC LIMIT 10;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 50 },
+              { "color": "red", "value": 65 }
+            ]
+          },
+          "unit": "currencyKES"
+        }
+      },
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "horizontal",
+        "showUnfilled": true
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 },
+      "id": 102,
+      "title": "Longitudinal Trends & Harvest Seasonality",
+      "type": "row"
+    },
+    {
+      "id": 7,
+      "title": "Commodity Price Trends Over Time (2006 - 2026)",
+      "type": "timeseries",
+      "gridPos": { "h": 9, "w": 15, "x": 0, "y": 17 },
+      "datasource": { "type": "postgres", "uid": "PostgreSQL-Food-Prices" },
+      "targets": [
+        {
+          "rawSql": "SELECT d.full_date AS \"time\", c.commodity_name AS metric, ROUND(AVG(f.normalized_price_per_kg)::numeric, 2) AS value FROM analytics.fact_food_prices f JOIN analytics.dim_date d ON f.date_id = d.date_id JOIN analytics.dim_commodity c ON f.commodity_id = c.commodity_id WHERE c.commodity_name IN ('Maize (white)', 'Beans (dry)', 'Potatoes (Irish)', 'Rice', 'Wheat flour') GROUP BY d.full_date, c.commodity_name ORDER BY d.full_date ASC;",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "unit": "currencyKES"
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Harvest Season vs. Off-Season Price Disparity",
+      "type": "barchart",
+      "gridPos": { "h": 9, "w": 9, "x": 15, "y": 17 },
+      "datasource": { "type": "postgres", "uid": "PostgreSQL-Food-Prices" },
+      "targets": [
+        {
+          "rawSql": "SELECT c.commodity_name, CASE WHEN d.is_harvest_season THEN 'Harvest Season' ELSE 'Off-Season' END AS season, ROUND(AVG(f.normalized_price_per_kg)::numeric, 2) AS avg_price_per_kg FROM analytics.fact_food_prices f JOIN analytics.dim_commodity c ON f.commodity_id = c.commodity_id JOIN analytics.dim_date d ON f.date_id = d.date_id WHERE c.commodity_name IN ('Maize (white)', 'Beans (dry)', 'Potatoes (Irish)', 'Sorghum') GROUP BY c.commodity_name, d.is_harvest_season ORDER BY c.commodity_name, season;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "currencyKES"
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "xField": "commodity_name"
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 26 },
+      "id": 103,
+      "title": "Granular Market Drill-Down & Inflation Registry",
+      "type": "row"
+    },
+    {
+      "id": 9,
+      "title": "Granular County Food Price & Inflation Registry (2023 - 2026)",
+      "type": "table",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 27 },
+      "datasource": { "type": "postgres", "uid": "PostgreSQL-Food-Prices" },
+      "targets": [
+        {
+          "rawSql": "SELECT loc.county_name AS \"County\", loc.county_code AS \"Code\", c.commodity_name AS \"Commodity\", f.price_type AS \"Market Tier\", ROUND(AVG(f.normalized_price_per_kg)::numeric, 2) AS \"Price (KES/KG)\", ROUND(AVG(f.yoy_inflation_pct)::numeric, 2) AS \"YoY Inflation (%)\", COUNT(*) AS \"Observations\" FROM analytics.fact_food_prices f JOIN analytics.dim_location loc ON f.location_id = loc.location_id JOIN analytics.dim_commodity c ON f.commodity_id = c.commodity_id JOIN analytics.dim_date d ON f.date_id = d.date_id WHERE d.year >= 2023 GROUP BY loc.county_name, loc.county_code, c.commodity_name, f.price_type ORDER BY \"Price (KES/KG)\" DESC LIMIT 100;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "inspect": false
+          }
+        }
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          { "displayName": "Price (KES/KG)", "desc": true }
+        ]
+      }
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "tags": ["kenya", "food_prices", "inflation", "capstone", "knbs", "wfp"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "2006-01-01T00:00:00.000Z",
+    "to": "2026-12-31T23:59:59.000Z"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Kenya Food Prices & Inflation Analytics Platform",
+  "uid": "kenya-food-prices-analytics",
+  "version": 1
+}

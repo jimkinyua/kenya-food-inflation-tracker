@@ -1,0 +1,19 @@
+apiVersion: 1
+
+datasources:
+  - name: PostgreSQL-Food-Prices
+    type: postgres
+    access: proxy
+    url: localhost:5432
+    user: postgres
+    secureJsonData:
+      password: Pass@7046.
+    jsonData:
+      database: kenya_food_prices
+      sslmode: disable
+      maxOpenConns: 5
+      maxIdleConns: 2
+      connMaxLifetime: 14400
+      postgresVersion: 1600
+    isDefault: true
+    editable: true

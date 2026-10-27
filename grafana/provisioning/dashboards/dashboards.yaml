@@ -1,0 +1,14 @@
+apiVersion: 1
+
+providers:
+  - name: 'Kenya Food Market Analytics'
+    orgId: 1
+    folder: 'Capstone Analytics'
+    folderUid: 'kenya-capstone'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /opt/kenya-food-market-analytics/grafana
+      foldersFromFilesStructure: false
