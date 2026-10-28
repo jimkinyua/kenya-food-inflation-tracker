@@ -114,7 +114,7 @@
       "datasource": { "type": "grafana-postgresql-datasource", "uid": "P3C336B6B9F9329C5" },
       "targets": [
         {
-          "rawSql": "SELECT ROUND(AVG(f.normalized_price_per_kg)::numeric, 2) AS current_price FROM analytics.fact_food_prices f JOIN analytics.dim_commodity c ON f.commodity_id = c.commodity_id WHERE c.commodity_name = 'Maize (white)' AND f.date_id >= 20230101;",
+          "rawSql": "SELECT ROUND(AVG(f.normalized_price_per_kg)::numeric, 2) AS current_price FROM analytics.fact_food_prices f JOIN analytics.dim_commodity c ON f.commodity_id = c.commodity_id WHERE c.commodity_name = 'Maize (white)';",
           "format": "table"
         }
       ],
@@ -125,8 +125,8 @@
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "yellow", "value": 60 },
-              { "color": "red", "value": 85 }
+              { "color": "yellow", "value": 50 },
+              { "color": "red", "value": 70 }
             ]
           },
           "unit": "currencyKES"
@@ -206,7 +206,7 @@
       "datasource": { "type": "grafana-postgresql-datasource", "uid": "P3C336B6B9F9329C5" },
       "targets": [
         {
-          "rawSql": "SELECT loc.county_name AS metric, ROUND(AVG(f.normalized_price_per_kg)::numeric, 2) AS value FROM analytics.fact_food_prices f JOIN analytics.dim_location loc ON f.location_id = loc.location_id JOIN analytics.dim_commodity c ON f.commodity_id = c.commodity_id WHERE c.commodity_name = 'Maize (white)' GROUP BY loc.county_name ORDER BY value DESC LIMIT 10;",
+          "rawSql": "SELECT loc.county_name AS \"metric\", ROUND(AVG(f.normalized_price_per_kg)::numeric, 2) AS \"value\" FROM analytics.fact_food_prices f JOIN analytics.dim_location loc ON f.location_id = loc.location_id JOIN analytics.dim_commodity c ON f.commodity_id = c.commodity_id WHERE c.commodity_name = 'Maize (white)' GROUP BY loc.county_name ORDER BY \"value\" DESC LIMIT 10;",
           "format": "table"
         }
       ],
@@ -217,14 +217,15 @@
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "orange", "value": 50 },
-              { "color": "red", "value": 65 }
+              { "color": "orange", "value": 45 },
+              { "color": "red", "value": 55 }
             ]
           },
           "unit": "currencyKES"
         }
       },
       "options": {
+        "reduceOptions": { "values": true, "calcs": [] },
         "displayMode": "gradient",
         "orientation": "horizontal",
         "showUnfilled": true
