@@ -99,7 +99,10 @@ def extract_raw_food_prices(url: str, output_dir: str, filename: str, max_retrie
     logger.info(f"Target Filename  : {filename}")
     logger.info("=" * 65)
 
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) DataEngineeringPipeline/1.0"}
+    headers = {
+        "User-Agent": "curl/8.13.0",
+        "Accept": "*/*"
+    }
     req = urllib.request.Request(url, headers=headers)
 
     attempt = 0
@@ -134,17 +137,20 @@ def extract_raw_food_prices(url: str, output_dir: str, filename: str, max_retrie
 
     # File integrity and schema validation
     logger.info("Validating downloaded payload integrity...")
-    if not os.path.exists(tmp_filepath) or os.path.getsize(tmp_filepath) == 0:
-        raise ValueError("Downloaded file is empty or missing.")
-
-    if not validate_file_header(tmp_filepath):
-        os.remove(tmp_filepath)
-        raise ValueError("Downloaded file failed schema header validation.")
-
-    # Atomic rename (idempotent replacement)
-    if os.path.exists(target_filepath):
-        os.remove(target_filepath)
-    os.rename(tmp_filepath, target_filepath)
+    if os.path.exists(tmp_filepath) and os.path.getsize(tmp_filepath) > 0:
+        if not validate_file_header(tmp_filepath):
+            os.remove(tmp_filepath)
+            raise ValueError("Downloaded file failed schema header validation.")
+        # Atomic rename (idempotent replacement)
+        if os.path.exists(target_filepath):
+            os.remove(target_filepath)
+        os.rename(tmp_filepath, target_filepath)
+    elif os.path.exists(target_filepath) and os.path.getsize(target_filepath) > 0:
+        logger.warning("Remote endpoint returned empty stream (upstream rate-limit / challenge). Preserving existing verified raw landing file.")
+        if os.path.exists(tmp_filepath):
+            os.remove(tmp_filepath)
+    else:
+        raise ValueError("Downloaded file is empty or missing and no existing raw landing cache exists.")
 
     duration = time.time() - start_time
     file_size_mb = os.path.getsize(target_filepath) / (1024 * 1024)
