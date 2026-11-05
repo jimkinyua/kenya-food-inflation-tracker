@@ -134,6 +134,7 @@ Every pipeline execution validates 6 automated quality assertions against Postgr
 
 | Architectural Component | Technical Scope & Implementation | Core Deliverable | Operational Status |
 | :--- | :--- | :--- | :---: |
+| **Source Profiling** | Institutional provenance (KNBS/MoA), schema types, CC BY-IGO licence | [`docs/source_profile.md`](docs/source_profile.md) | **Production Active** |
 | **Data Modeling** | Kimball Star Schema OLAP design with 4 pillars | [`sql/02_analytics/create_star_schema.sql`](sql/02_analytics/create_star_schema.sql) | **Production Active** |
 | **Batch Ingestion** | Atomic `.tmp` writes with MD5 hash validation | [`scripts/extract_wfp_food_prices.py`](scripts/extract_wfp_food_prices.py) | **Production Active** |
 | **Data Cleaning** | Normalization (per-kg), GPS & administrative imputation | [`scripts/transform_clean_food_prices.py`](scripts/transform_clean_food_prices.py) | **Production Active** |
