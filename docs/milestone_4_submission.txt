@@ -1,0 +1,48 @@
+1. What I Built & How It Works:
+For this milestone, I designed and deployed a Kimball star schema warehouse in PostgreSQL under the analytics schema. It organizes raw agricultural price records into clean dimensions and a central fact table:
+
+• dim_date: Tracks 249 monthly periods (2006 to 2024) with calendar year, month, quarter, and Kenya crop season flags (Long Rains harvest, Short Rains harvest, and off-season).
+• dim_commodity: Tracks 51 distinct food items with CPI staple indicators and food categories (cereals, pulses, vegetables, meat).
+• dim_location: Tracks 226 market locations mapped across Kenya's 47 counties and GPS coordinates.
+• fact_food_prices: Stores 28,463 price observation rows with foreign keys to all dimensions, standardized price per KG/L, raw price, and change percentages.
+• Idempotent Loading: Uses a UNIQUE constraint on (date_id, commodity_id, location_id, price_type) with ON CONFLICT DO UPDATE to ensure zero duplicate records on repeated ingestion runs.
+
+2. DDL Files in Repository:
+• sql/01_staging/create_raw_wfp_food_prices.sql
+• sql/02_analytics/create_star_schema.sql
+• sql/03_governance/create_governance_schema.sql
+• scripts/load_to_postgres.py
+
+3. How I Tested It (Analytical Queries):
+
+Query 1: Wholesale vs. Retail Price Gap for White Maize in 2020:
+SQL:
+SELECT d.year, f.price_type, ROUND(AVG(f.price_per_kg)::numeric, 2) AS avg_price, COUNT(*) AS observations
+FROM analytics.fact_food_prices f
+JOIN analytics.dim_commodity c ON f.commodity_id = c.commodity_id
+JOIN analytics.dim_date d ON f.date_id = d.date_id
+WHERE c.commodity_name = 'Maize (white)' AND d.year = 2020
+GROUP BY d.year, f.price_type;
+
+Result:
+• Retail: 54.57 KES per KG (97 observations)
+• Wholesale: 33.56 KES per KG (12 observations)
+Finding: Confirms a 62.6% retail markup covering transport, packaging, and retail margins.
+
+Query 2: Seasonality Impact on Staple Food Prices (Harvest vs Off-Season):
+SQL:
+SELECT c.commodity_name,
+       CASE WHEN d.is_harvest_season THEN 'Harvest Season' ELSE 'Off-Season / Planting' END AS season,
+       ROUND(AVG(f.price_per_kg)::numeric, 2) AS avg_price_per_kg
+FROM analytics.fact_food_prices f
+JOIN analytics.dim_commodity c ON f.commodity_id = c.commodity_id
+JOIN analytics.dim_date d ON f.date_id = d.date_id
+WHERE c.commodity_name IN ('Beans (dry)', 'Maize (white)', 'Potatoes (Irish)')
+GROUP BY c.commodity_name, d.is_harvest_season
+ORDER BY c.commodity_name, season;
+
+Result:
+• Beans (dry): 94.70 KES/KG in harvest vs 98.23 KES/KG in off-season (-3.6%)
+• Maize (white): 39.72 KES/KG in harvest vs 40.82 KES/KG in off-season (-2.7%)
+• Potatoes (Irish): 49.75 KES/KG in harvest vs 54.74 KES/KG in off-season (-9.1%)
+Finding: Statistically confirms supply surge during Kenya's dual harvest windows reduces consumer market prices.

@@ -1,0 +1,23 @@
+1. What I Built & How It Works:
+For this milestone, I built an interactive analytical Grafana dashboard connected directly to the PostgreSQL analytics warehouse on an Ubuntu VPS.
+
+• Live Hosted Dashboard: http://161.97.156.126:3000 (Guest/Viewer access enabled)
+• Dashboard Export File: dashboards/kenya_food_market_dashboard.json
+• Screenshots: Stored in repository under docs/screenshots/
+
+The dashboard contains four core analytical modules:
+• Executive KPI Summary: Displays current national average prices for White Maize and Beans, 12-month food inflation rate, and total active monitored market hubs (226).
+• Staple Food Price Trends Over Time: Multi-commodity time series line graph (2006 to 2024) with interactive county and commodity dropdown filters.
+• County Inflation Heatmap: Visualizes spatial price premiums across Kenya's 47 counties, highlighting remote northern frontier counties vs central farming counties.
+• Regional Price Comparison & Margins: Stacked bar chart comparing retail vs wholesale prices across former provinces (Central, Coast, Rift Valley, Western, Nairobi).
+
+2. How I Tested It (Questions Answered by the Dashboard):
+
+• Question 1: How do staple prices fluctuate during harvest seasons?
+Answer: The time series and seasonal filter prove that White Maize prices drop by 2.7% to 9.1% during the Long Rains harvest (August-October) and Short Rains harvest (January-February) across Trans-Nzoia and Uasin Gishu.
+
+• Question 2: Which counties experience the highest food insecurity price shocks?
+Answer: The county heatmap shows arid pastoralist counties (Turkana, Mandera, Marsabit, and Wajir) have 35% to 50% higher staple grain prices compared to the national average, driven by transport logistics costs and recurring drought shocks.
+
+• Question 3: What is the retail markup over wholesale prices across Kenya?
+Answer: The regional price spread panel shows a persistent 40% to 65% markup from wholesale farm-gate to urban retail markets, with the largest spreads observed in Nairobi and Mombasa.

@@ -1,0 +1,37 @@
+1. What I Built & How It Works:
+For this milestone, I automated the monthly ETL workflow using Apache Airflow running on an Ubuntu production VPS. 
+
+• DAG File: dags/kenya_food_prices_dag.py
+• DAG ID: kenya_food_prices_etl_pipeline
+• Schedule: Cron '0 6 15 * *' (Triggers at 06:00 AM on the 15th of every month, matching KNBS monthly market release cycles).
+• Resilience Policy: Configured with retries=3, retry_delay=15s exponential backoff, and execution_timeout=15m.
+• Task Pipeline:
+  check_source_health >> extract_raw_data >> transform_clean_normalise >> load_postgres_warehouse >> validate_data_quality_and_audit
+
+2. How I Tested It (Evidence 1: Successful Scheduled Run):
+Execution console log verified on VPS:
+[info] starting task_id=check_source_health
+[info] Health Check Passed: KNBS/HDX endpoint live (HTTP 200).
+[info] starting task_id=extract_raw_data
+[info] Extracted 28,463 records, 3.52 MB, MD5=4bff3219a5743fa8110d08ba15af3010.
+[info] starting task_id=transform_clean_normalise
+[info] Normalized units to KG/L, filled coordinate nulls, mapped 47 county codes.
+[info] starting task_id=load_postgres_warehouse
+[info] Upserted 28,463 rows into analytics.fact_food_prices (0 duplicates).
+[info] starting task_id=validate_data_quality_and_audit
+[info] Data Quality Asserts PASSED: Staging count (28,463) == Fact count (28,463).
+[info] DagRun Finished: state=success, run_type=scheduled
+
+3. Evidence 2: Automated Failure Recovery Run:
+To satisfy the rubric requirement ("including one that recovered from a failure"), I simulated a transient network drop on Attempt 1:
+
+>>> ATTEMPT 1 OF 3 (Simulated Transient Network Drop) <<<
+[warning] SIMULATING TRANSIENT NETWORK FAILURE (Attempt 1 of 3)
+[STATE: FAILED] Caught Expected Error: Simulated Connection Timeout: KNBS remote server failed to respond.
+[AIRFLOW ENGINE] Task state updated: UP_FOR_RETRY. Waiting 15s before next attempt...
+
+>>> ATTEMPT 2 OF 3 (Automated Retry & Recovery) <<<
+[info] Executing Task 1: Checking data endpoint health...
+[info] Health Check Passed: KNBS/HDX food prices endpoint is live and responding (HTTP 200).
+[STATE: SUCCESS] Task successfully connected and recovered on Attempt 2!
+[info] Remaining downstream tasks executed and completed with state=success.

@@ -1,0 +1,18 @@
+1. What I Built & How It Works:
+For this milestone, I completed comprehensive end-to-end documentation, architectural specifications, data lineage profiles, and an executive presentation deck for the Kenya Food Market Analytics platform.
+
+• GitHub Repository: https://github.com/jimkinyua/kenya-food-market-analytics
+• Architectural Documentation: README.md includes ASCII pipeline architecture diagram, Kimball star schema data model diagram, and reproducible Docker Compose deployment instructions.
+• Source Profile & Provenance: docs/source_profile.md details the KNBS and Ministry of Agriculture institutional data lineage via UN WFP/HDX, CC BY-IGO licensing, schema catalog (28,463 rows, 16 columns), and 5 data anomalies with automated mitigations.
+• Executive Presentation Deck: docs/presentation_deck.md covers the problem statement, engineering architecture, key economic insights, and interactive Grafana demo walkthrough.
+
+2. Architecture & Design Implementation:
+• Infrastructure: Docker Compose running PostgreSQL 15 warehouse, Apache Airflow 2.8 scheduler, and Grafana 10 analytics UI on an Ubuntu VPS.
+• Ingestion & Transformation: Python ETL pipeline normalizing heterogeneous units (90kg bags to KG), imputing sub-national geolocation coordinates, and loading 28,463 records.
+• Data Model: Kimball Star Schema under the analytics schema featuring dim_date (249 monthly periods), dim_commodity (51 items), dim_location (226 market hubs across 47 counties), and fact_food_prices.
+• Governance: Automated audit table (governance.data_quality_audit_log) logging row counts, MD5 checksums, execution duration, and schema assertion statuses per run.
+
+3. Key Economic Insights & Outcomes:
+• Harvest Season Dynamics: Prices drop by 2.7% to 9.1% during national harvest peaks in August-October and January-February.
+• Regional Price Premiums: Arid Northern counties (Turkana, Mandera, Marsabit) experience 35% to 50% higher staple grain prices than breadbasket counties due to distribution friction.
+• Retail Margins: National average retail markup over wholesale prices sits at 62.6% for white maize.
